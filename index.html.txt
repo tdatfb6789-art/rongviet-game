@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Game Tài Xỉu - Rồng Việt (Mobile)</title>
+<style>
+  body {
+    background: radial-gradient(circle at center, #fef1d4, #b22222);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    min-height: 100vh;
+    background-image: url('https://i.imgur.com/GBKRbnK.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: 250px auto;
+  }
+  h1 {
+    margin-bottom: 5px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 5px #660000;
+  }
+  .balance {
+    font-size: 1.3rem;
+    margin: 15px 0;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px #660000;
+  }
+  .input-group {
+    margin: 15px 0;
+  }
+  input[type=number], select {
+    padding: 10px;
+    font-size: 1.1rem;
+    width: 160px;
+    border-radius: 6px;
+    border: none;
+    text-align: center;
+  }
+  button {
+    padding: 12px 25px;
+    margin: 10px 8px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    color: #b22222;
+    background: #fff9e3;
+    box-shadow: 2px 2px 6px #aa0000;
+    transition: 0.3s ease;
+  }
+  button:hover {
+    background: #ffcc00;
+    color: #7a0000;
+    box-shadow: 3px 3px 8px #bb3300;
+  }
+  #dice, #result, #withdrawResult {
+    margin-top: 20px;
+    font-size: 1.4rem;
+    text-shadow: 1px 1px 3px #330000;
+  }
+  #history {
+    margin-top: 30px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 0 10px #660000;
+    text-align: left;
+    font-size: 1rem;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  #history h2 {
+    margin-top: 0;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 1px 1px 3px #330000;
+  }
+  #history ul {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 0;
+  }
+  #history li {
+    margin-bottom: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    color: #330000;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <h1>🎲 Game Tài Xỉu - Rồng Việt 🎲</h1>
+  <div class="balance">Số dư của bạn: <span id="balance">1000</span> VNĐ</div>
+  
+  <div class="input-group">
+    <label for="betAmount">Số tiền cược: </label><br />
+    <input type="number" id="betAmount" min="10" max="1000" step="10" value="100" />
+  </div>
+  
+  <div>
+    <button onclick="play('T')">Cược Tài</button>
+    <button onclick="play('X')">Cược Xỉu</button>
+  </div>
+
+  <div id="dice"></div>
+  <div id="result"></div>
+
+  <div class="input-group">
+    <label for="withdrawAmount">Rút tiền ảo: </label><br />
+    <input type="number" id="withdrawAmount" min="10" step="10" value="100" />
+  </div>
+
+  <div class="input-group">
+    <label for="bankSelect">Chọn ngân hàng: </label><br />
+    <select id="bankSelect">
+      <option value="Vietcombank">Vietcombank</option>
+      <option value="Techcombank">Techcombank</option>
+      <option value="VietinBank">VietinBank</option>
+      <option value="BIDV">BIDV</option>
+      <option value="Agribank">Agribank</option>
+      <option value="MBBank">MBBank</option>
+      <option value="ACB">ACB</option>
+      <option value="Sacombank">Sacombank</option>
+      <option value="TPBank">TPBank</option>
+      <option value="VPBank">VPBank</option>
+      <option value="Eximbank">Eximbank</option>
+      <option value="OCB">OCB</option>
+      <option value="ShinhanBank">ShinhanBank</option>
+      <option value="DongA Bank">DongA Bank</option>
+    </select>
+  </div>
+
+  <button onclick="withdraw()">Rút tiền</button>
+  <div id="withdrawResult"></div>
+
+  <div id="history">
+    <h2>Lịch sử cược</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+<script>
+  let balance = 1000;
+  const balanceEl = document.getElementById('balance');
+  const betInput = document.getElementById('betAmount');
+  const withdrawInput = document.getElementById('withdrawAmount');
+  const bankSelect = document.getElementById('bankSelect');
+  const diceEl = document.getElementById('dice');
+  const resultEl = document.getElementById('result');
+  const withdrawResultEl = document.getElementById('withdrawResult');
+  const historyList = document.getElementById('historyList');
+
+  function play(cuoc) {
+    let bet = parseInt(betInput.value);
+    if (isNaN(bet) || bet < 10) {
+      alert('Số tiền cược tối thiểu là 10 VNĐ!');
+      return;
+    }
+    if (bet > balance) {
+      alert('Bạn không đủ tiền cược!');
+      return;
+    }
+
+    const xucXac = [
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+    ];
+    const tong = xucXac.reduce((a, b) => a + b, 0);
+    let ketQua = '';
+    if (tong >= 11 && tong <= 17) ketQua = 'T';
+    else if (tong >= 4 && tong <= 10) ketQua = 'X';
+    else ketQua = 'N';
+
+    diceEl.textContent = `Xúc xắc: ${xucXac.join(', ')} - Tổng: ${tong}`;
+
+    let message = '';
+    if (ketQua === 'N') {
+      message = 'Ba viên cùng số, bạn thua cược!';
+      balance -= bet;
+    } else if (ketQua === cuoc) {
+      message = `Chúc mừng! Bạn thắng cược và được thưởng ${bet} VNĐ.`;
+      balance += bet;
+    } else {
+      message = 'Bạn thua cược!';
+      balance -= bet;
+    }
+
+    resultEl.textContent = message;
+    balanceEl.textContent = balance;
+
+    const li = document.createElement('li');
+    li.textContent = `Cược: ${cuoc === 'T' ? 'Tài' : 'Xỉu'} | Xúc xắc: ${xucXac.join(', ')} | Tổng: ${tong} | Kết quả: ${
+      ketQua === 'N' ? 'Ba viên cùng số - Thua' : ketQua === cuoc ? 'Thắng' : 'Thua'
+    } | Tiền cược: ${bet} VNĐ`;
+    historyList.prepend(li);
+
+    if (balance <= 0) {
+      alert('Bạn đã hết tiền! Trò chơi sẽ được reset.');
+      resetGame();
+    }
+  }
+
+  function withdraw() {
+    let withdrawAmount = parseInt(withdrawInput.value);
+    let bank = bankSelect.value;
+    if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+      withdrawResultEl.textContent = 'Vui lòng nhập số tiền rút hợp lệ.';
+      withdrawResultEl.style.color = '#ffcc00';
+      return;
+    }
+    if (withdrawAmount > balance) {
+      withdrawResultEl.textContent = 'Số dư không đủ để rút!';
+      withdrawResultEl.style.color = '#ff4444';
+      return;
+    }
+    balance -= withdrawAmount;
+    balanceEl.textContent = balance;
+    withdrawResultEl.textContent = `Bạn đã rút thành công ${withdrawAmount} VNĐ qua ngân hàng ${bank}.`;
+    withdrawResultEl.style.color = '#00ff00';
+
+    if (balance <= 0) {
+      alert('Bạn đã hết tiền! Trò chơi sẽ được reset.');
+      resetGame();
+    }
+  }
+
+  function resetGame() {
+    balance = 1000;
+    balanceEl.textContent = balance;
+    historyList.innerHTML = '';
+    diceEl.textContent = '';
+    resultEl.textContent = '';
+    withdrawResultEl.textContent = '';
+    betInput.value = 100;
+    withdrawInput.value = 100;
+  }
+</script>
+</body>
+</html>
